@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ロコモ度 簡易チェック</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1F2A44; --sub:#56607A; --paper:#F6F8F7; --card:#FFFFFF; --line:#D5DBE3;
+  --accent:#1C6E8C; --accent-soft:#E3F0F4;
+  --lv0:#2F8552; --lv0-soft:#E4F2E9;
+  --lv1:#B8860B; --lv1-soft:#FBF1D6;
+  --lv2:#CC5F12; --lv2-soft:#FCE6D4;
+  --lv3:#B3261E; --lv3-soft:#F9DEDC;
+  --err:#B3261E;
+  --ui:"BIZ UDPGothic","Hiragino Sans","Yu Gothic",Meiryo,sans-serif;
+  --round:"Zen Maru Gothic","BIZ UDPGothic","Hiragino Maru Gothic ProN",sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ink:#E8ECF3; --sub:#A9B2C6; --paper:#141A24; --card:#1D2533; --line:#34405A;
+    --accent:#6BB8D4; --accent-soft:#1E3440;
+    --lv0:#6CC08D; --lv0-soft:#1E3326; --lv1:#E3B64A; --lv1-soft:#3A3018;
+    --lv2:#F0955A; --lv2-soft:#3E2718; --lv3:#F07A72; --lv3-soft:#401F1D; --err:#F07A72;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#E8ECF3; --sub:#A9B2C6; --paper:#141A24; --card:#1D2533; --line:#34405A;
+  --accent:#6BB8D4; --accent-soft:#1E3440;
+  --lv0:#6CC08D; --lv0-soft:#1E3326; --lv1:#E3B64A; --lv1-soft:#3A3018;
+  --lv2:#F0955A; --lv2-soft:#3E2718; --lv3:#F07A72; --lv3-soft:#401F1D; --err:#F07A72;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--ui);font-size:18px;line-height:1.7}
+main{max-width:760px;margin:0 auto;padding:24px 20px 64px}
+header h1{font-family:var(--round);font-weight:700;font-size:30px;margin:8px 0 4px;letter-spacing:.02em}
+header p{margin:0 0 24px;color:var(--sub);font-size:16px}
+section.step{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px 22px 24px;margin-bottom:18px}
+.step-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.num{flex:0 0 36px;height:36px;border-radius:50%;background:var(--accent);color:var(--card);display:grid;place-items:center;font-weight:700;font-size:18px}
+.step-head h2{margin:0;font-size:21px;font-family:var(--round);font-weight:700}
+label.field{display:block;margin:10px 0 4px;font-weight:700}
+.row{display:flex;gap:14px;flex-wrap:wrap}
+.row > div{flex:1 1 180px}
+.unit{position:relative}
+.unit input{width:100%;font:inherit;font-size:26px;padding:10px 56px 10px 14px;border:2px solid var(--line);border-radius:12px;background:var(--paper);color:var(--ink)}
+.unit span{position:absolute;right:16px;top:50%;transform:translateY(-50%);color:var(--sub);font-size:18px}
+.unit input:focus{outline:none;border-color:var(--accent)}
+.hint{color:var(--sub);font-size:15px;margin:6px 0 0}
+.calc{margin-top:14px;padding:12px 16px;border-radius:12px;background:var(--accent-soft);font-size:17px}
+.calc strong{font-size:24px}
+.err{color:var(--err);font-size:15px;min-height:1.4em;margin-top:6px}
+.q{border-top:1px dashed var(--line);padding-top:14px;margin-top:14px}
+.q:first-of-type{border-top:none;margin-top:0;padding-top:0}
+.q p{margin:0 0 10px;font-weight:700;font-size:19px}
+.q small{display:block;font-weight:400;color:var(--sub);font-size:15px}
+.choices{display:flex;gap:12px;flex-wrap:wrap}
+.choices.pair{display:grid;grid-template-columns:auto 1fr 1fr;gap:10px;align-items:center}
+.side{font-weight:700;padding-right:6px}
+button{font:inherit;cursor:pointer}
+.opt{flex:1 1 140px;min-height:60px;font-size:19px;font-weight:700;border-radius:14px;border:2px solid var(--line);background:var(--paper);color:var(--ink);padding:8px 12px}
+.opt[aria-pressed="true"]{border-color:var(--accent);background:var(--accent);color:var(--card)}
+.opt:focus-visible,.main-btn:focus-visible,.link-btn:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.stop{margin-top:16px;display:flex;align-items:center;gap:10px;font-size:16px;color:var(--sub)}
+.stop input{width:24px;height:24px;accent-color:var(--accent)}
+.note{margin-top:12px;padding:10px 14px;border-left:4px solid var(--lv3);background:var(--lv3-soft);font-size:16px}
+.main-btn{display:block;width:100%;min-height:68px;border:none;border-radius:16px;background:var(--accent);color:var(--card);font-size:22px;font-weight:700;font-family:var(--round);margin-top:8px}
+.main-btn:disabled{opacity:.4;cursor:not-allowed}
+#result{display:none;margin-top:22px}
+#result.show{display:block}
+.verdict{border-radius:22px;padding:26px 24px;text-align:center;border:3px solid var(--c);background:var(--cs)}
+.verdict .lbl{font-size:18px;color:var(--sub);margin:0}
+.verdict .big{font-family:var(--round);font-weight:700;font-size:64px;line-height:1.2;color:var(--c);margin:4px 0}
+.verdict .sub{font-size:18px;margin:0}
+.scale{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:22px 0 6px}
+.scale div{height:16px;border-radius:8px;background:var(--line)}
+.scale-lbl{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;font-size:14px;color:var(--sub);text-align:center}
+.detail{margin-top:18px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px 20px}
+.detail table{width:100%;border-collapse:collapse;font-size:17px}
+.detail th,.detail td{text-align:left;padding:10px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+.detail tr:last-child th,.detail tr:last-child td{border-bottom:none}
+.detail th{width:38%;color:var(--sub);font-weight:400}
+.advice h3{font-family:var(--round);font-size:20px;margin:0 0 6px}
+.advice p{margin:0 0 8px}
+.foot{font-size:14px;color:var(--sub);margin-top:14px}
+.link-btn{background:none;border:2px solid var(--line);border-radius:14px;color:var(--ink);min-height:60px;width:100%;font-size:19px;font-weight:700;margin-top:18px}
+@media (max-width:520px){.verdict .big{font-size:48px}header h1{font-size:25px}}
+@media print{.step,.main-btn,.link-btn{display:none!important}#result{display:block}}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>ロコモ度 簡易チェック</h1>
+    <p>2ステップテストと立ち上がりテスト（40cm・20cm）の結果から、ロコモ度の目安を判定します。</p>
+  </header>
+
+  <section class="step" aria-labelledby="h1">
+    <div class="step-head"><div class="num">1</div><h2 id="h1">身長</h2></div>
+    <label class="field" for="height">身長</label>
+    <div class="unit"><input id="height" type="number" inputmode="decimal" min="100" max="220" step="0.1" placeholder="160"><span>cm</span></div>
+    <div class="err" id="err-height"></div>
+  </section>
+
+  <section class="step" aria-labelledby="h2">
+    <div class="step-head"><div class="num">2</div><h2 id="h2">2ステップテスト</h2></div>
+    <p class="hint" style="margin-top:0">2回測定し、長いほうを採用します。1回のみの場合は1回目だけ入力してください。</p>
+    <div class="row">
+      <div>
+        <label class="field" for="s1">1回目の2歩幅</label>
+        <div class="unit"><input id="s1" type="number" inputmode="decimal" min="0" max="400" step="0.5" placeholder="200"><span>cm</span></div>
+      </div>
+      <div>
+        <label class="field" for="s2">2回目の2歩幅</label>
+        <div class="unit"><input id="s2" type="number" inputmode="decimal" min="0" max="400" step="0.5" placeholder="205"><span>cm</span></div>
+      </div>
+    </div>
+    <div class="err" id="err-step"></div>
+    <div class="calc" id="calc" hidden></div>
+    <div class="stop"><input type="checkbox" id="stepSkip"><label for="stepSkip">痛み・ふらつき等で実施しなかった</label></div>
+  </section>
+
+  <section class="step" aria-labelledby="h3">
+    <div class="step-head"><div class="num">3</div><h2 id="h3">立ち上がりテスト</h2></div>
+
+    <div class="q" id="q1">
+      <p>40cmの台から、両脚で立ち上がれましたか？<small>反動をつけずに立ち上がり、3秒保持できれば「できた」</small></p>
+      <div class="choices">
+        <button type="button" class="opt" data-q="b40" data-v="yes" aria-pressed="false">できた</button>
+        <button type="button" class="opt" data-q="b40" data-v="no" aria-pressed="false">できなかった</button>
+      </div>
+    </div>
+
+    <div class="q" id="q2" hidden>
+      <p>40cmの台から、片脚で立ち上がれましたか？<small>左右それぞれ選んでください</small></p>
+      <div class="choices pair">
+        <span class="side">左脚</span>
+        <button type="button" class="opt" data-q="l40" data-v="yes" aria-pressed="false">できた</button>
+        <button type="button" class="opt" data-q="l40" data-v="no" aria-pressed="false">できなかった</button>
+        <span class="side">右脚</span>
+        <button type="button" class="opt" data-q="r40" data-v="yes" aria-pressed="false">できた</button>
+        <button type="button" class="opt" data-q="r40" data-v="no" aria-pressed="false">できなかった</button>
+      </div>
+    </div>
+
+    <div class="q" id="q3" hidden>
+      <p>20cmの台から、両脚で立ち上がれましたか？</p>
+      <div class="choices">
+        <button type="button" class="opt" data-q="b20" data-v="yes" aria-pressed="false">できた</button>
+        <button type="button" class="opt" data-q="b20" data-v="no" aria-pressed="false">できなかった</button>
+      </div>
+    </div>
+
+    <div class="note" id="note40" hidden>40cm両脚で立てないため、20cmは実施せずに終了してください。</div>
+    <div class="stop"><input type="checkbox" id="standSkip"><label for="standSkip">痛み・ふらつき等で中止した（実施しなかった）</label></div>
+  </section>
+
+  <div class="err" id="err-judge" role="alert"></div>
+  <button type="button" class="main-btn" id="judge">結果を表示</button>
+
+  <div id="result" aria-live="polite">
+    <div class="verdict" id="verdict">
+      <p class="lbl">あなたの結果</p>
+      <p class="big" id="vBig"></p>
+      <p class="sub" id="vSub"></p>
+      <div class="scale" aria-hidden="true"><div></div><div></div><div></div><div></div></div>
+      <div class="scale-lbl" aria-hidden="true"><span>該当なし</span><span>度1</span><span>度2</span><span>度3</span></div>
+    </div>
+    <div class="detail">
+      <table>
+        <tr><th>身長</th><td id="dH"></td></tr>
+        <tr><th>2ステップ値</th><td id="dS"></td></tr>
+        <tr><th>立ち上がりテスト</th><td id="dT"></td></tr>
+      </table>
+    </div>
+    <div class="detail advice">
+      <h3 id="aTitle"></h3>
+      <p id="aBody"></p>
+      <p class="foot">この結果は、ロコモ25（質問票）を省略した簡易判定です。診断ではありません。気になる症状がある方は、整形外科にご相談ください。<br>判定基準：日本整形外科学会「ロコモ度テスト」臨床判断値（2020年改訂）</p>
+    </div>
+    <button type="button" class="link-btn" id="reset">次の方へ（入力をすべて消去）</button>
+  </div>
+</main>
+
+<script>
+(function(){
+  var st = {b40:null,l40:null,r40:null,b20:null};
+  var $ = function(id){return document.getElementById(id);};
+  var LV = [
+    {name:'該当なし', c:'--lv0', cs:'--lv0-soft'},
+    {name:'ロコモ度1', c:'--lv1', cs:'--lv1-soft'},
+    {name:'ロコモ度2', c:'--lv2', cs:'--lv2-soft'},
+    {name:'ロコモ度3', c:'--lv3', cs:'--lv3-soft'}
+  ];
+  var ADV = [
+    ['現時点でロコモの兆候はみられません','今の運動習慣を続けましょう。片脚立ちやスクワットなどの「ロコトレ」を習慣にすると、将来の予防につながります。'],
+    ['移動機能の低下が始まっています','筋力やバランス力が落ち始めています。ロコトレを始め、たんぱく質やカルシウムを意識したバランスの良い食事を心がけましょう。'],
+    ['移動機能の低下が進んでいます','このままでは、将来ひとりで生活することが難しくなる可能性があります。膝や腰などに痛みがある方は、整形外科の受診をおすすめします。'],
+    ['移動機能の低下が進行し、生活に支障が出やすい状態です','早めに整形外科を受診し、原因となる病気がないか調べてもらいましょう。']
+  ];
+
+  function num(id){var v=$(id).value.trim(); return v===''?null:Number(v);}
+
+  function stepInfo(){
+    var h=num('height'), a=num('s1'), b=num('s2');
+    var best=null;
+    [a,b].forEach(function(x){ if(x!==null && x>0 && (best===null||x>best)) best=x; });
+    if(!h || h<100 || h>220 || best===null) return null;
+    var val=Math.round(best/h*100)/100;
+    var lv = val>=1.3?0 : val>=1.1?1 : val>=0.9?2 : 3;
+    return {best:best,val:val,lv:lv};
+  }
+
+  function updateCalc(){
+    var s=stepInfo(), box=$('calc');
+    if(s && !$('stepSkip').checked){
+      box.hidden=false;
+      box.innerHTML='採用する2歩幅 '+s.best+' cm ／ 2ステップ値 <strong>'+s.val.toFixed(2)+'</strong>';
+    } else box.hidden=true;
+  }
+
+  function standResult(){
+    if($('standSkip').checked) return {lv:null,done:true};
+    if(st.b40===null) return {done:false};
+    if(st.b40==='no') return {lv:3,done:true,text:'40cm両脚で立てない → 度3'};
+    if(st.l40===null||st.r40===null) return {done:false};
+    if(st.l40==='yes'&&st.r40==='yes') return {lv:0,done:true,text:'40cm片脚で左右とも立てる → 該当なし'};
+    if(st.b20===null) return {done:false};
+    if(st.b20==='yes') return {lv:1,done:true,text:'40cm片脚で立てない側あり／20cm両脚は可 → 度1'};
+    return {lv:2,done:true,maybe3:true,text:'20cm両脚で立てない → 度2（30cm未実施のため度3の可能性あり）'};
+  }
+
+  function render(){
+    document.querySelectorAll('.opt').forEach(function(b){
+      b.setAttribute('aria-pressed', st[b.dataset.q]===b.dataset.v ? 'true':'false');
+    });
+    var skip=$('standSkip').checked;
+    $('q1').hidden=skip;
+    $('q2').hidden=skip || st.b40!=='yes';
+    $('q3').hidden=skip || st.b40!=='yes' || st.l40===null || st.r40===null || (st.l40==='yes'&&st.r40==='yes');
+    $('note40').hidden=skip || st.b40!=='no';
+    $('s1').disabled=$('s2').disabled=$('stepSkip').checked;
+    updateCalc();
+  }
+
+  document.querySelectorAll('.opt').forEach(function(b){
+    b.addEventListener('click',function(){
+      var q=b.dataset.q; st[q]=b.dataset.v;
+      if(q==='b40'){st.l40=st.r40=st.b20=null;}
+      if(q==='l40'||q==='r40'){st.b20=null;}
+      $('err-judge').textContent='';
+      render();
+    });
+  });
+  ['height','s1','s2'].forEach(function(id){
+    $(id).addEventListener('input',function(){ $('err-height').textContent=''; $('err-step').textContent=''; $('err-judge').textContent=''; updateCalc(); });
+  });
+  ['stepSkip','standSkip'].forEach(function(id){ $(id).addEventListener('change',function(){ $('err-judge').textContent=''; render(); }); });
+
+  $('judge').addEventListener('click',function(){
+    var h=num('height'), ok=true;
+    var stepSkip=$('stepSkip').checked;
+    if(!stepSkip){
+      if(!h||h<100||h>220){ $('err-height').textContent='身長を100〜220cmの範囲で入力してください'; ok=false; }
+      var a=num('s1'), b=num('s2');
+      if((a===null||a<=0)&&(b===null||b<=0)){ $('err-step').textContent='2歩幅を少なくとも1回分入力してください'; ok=false; }
+      else if((a!==null&&(a<0||a>400))||(b!==null&&(b<0||b>400))){ $('err-step').textContent='2歩幅は0〜400cmの範囲で入力してください'; ok=false; }
+    }
+    var sr=standResult();
+    if(!sr.done){ $('err-judge').textContent='立ち上がりテストの回答が途中です。表示されている質問に答えてください'; ok=false; }
+    if(ok && stepSkip && sr.lv===null){ $('err-judge').textContent='両方のテストが未実施のため判定できません'; ok=false; }
+    if(!ok) return;
+
+    var s = stepSkip?null:stepInfo();
+    var sl = s?s.lv:-1, tl = sr.lv===null?-1:sr.lv;
+    var lv = Math.max(sl,tl);
+    var sub='';
+    if(lv===2 && sr.maybe3) sub='立ち上がりテストの結果から、度3の可能性もあります';
+    else if(stepSkip) sub='立ち上がりテストのみでの判定です';
+    else if(sr.lv===null) sub='2ステップテストのみでの判定です';
+    else sub='2つのテストのうち、重いほうの結果です';
+
+    var L=LV[lv], v=$('verdict');
+    v.style.setProperty('--c','var('+L.c+')'); v.style.setProperty('--cs','var('+L.cs+')');
+    $('vBig').textContent = lv===0?'該当なし':L.name+(lv>0?' の疑い':'');
+    $('vSub').textContent = sub;
+    document.querySelectorAll('.scale div').forEach(function(d,i){ d.style.background = i===lv ? 'var('+L.c+')' : ''; });
+    $('dH').textContent = h? h+' cm' : '—';
+    $('dS').textContent = s ? s.val.toFixed(2)+'（2歩幅 '+s.best+' cm）→ '+LV[s.lv].name.replace('ロコモ','') : '未実施';
+    $('dT').textContent = sr.lv===null ? '未実施' : sr.text;
+    $('aTitle').textContent = ADV[lv][0];
+    $('aBody').textContent = ADV[lv][1];
+    $('result').classList.add('show');
+    $('result').scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth', block:'start'});
+  });
+
+  $('reset').addEventListener('click',function(){
+    st={b40:null,l40:null,r40:null,b20:null};
+    ['height','s1','s2'].forEach(function(id){$(id).value='';});
+    $('stepSkip').checked=false; $('standSkip').checked=false;
+    ['err-height','err-step','err-judge'].forEach(function(id){$(id).textContent='';});
+    $('result').classList.remove('show');
+    render();
+    window.scrollTo({top:0});
+    $('height').focus();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
